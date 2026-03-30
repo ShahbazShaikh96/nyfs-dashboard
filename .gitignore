@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+nyfs/__pycache__/
+.DS_Store
+nyc_inspection_data.csv
+data/nyc_inspections_raw.csv
+data/nyc_inspections_clean.csv
