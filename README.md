@@ -82,3 +82,31 @@ The repository includes a GitHub Actions workflow at `.github/workflows/update_d
 ## Halal Filter
 
 NYFS intentionally does not fabricate halal filtering. The NYC inspection dataset does not include a reliable halal-specific field, so the app explains that limitation instead of guessing.
+
+## Next-Gen Platform (FastAPI + React Map)
+
+This repository now also includes a production-style foundation for the next NYFS product:
+
+- `apps/api`: FastAPI service over NYFS processed datasets
+- `apps/web`: React + Vite + MapLibre map client
+
+### Run API
+
+```bash
+cd apps/api
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8080
+```
+
+### Run Web Client
+
+```bash
+cd apps/web
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Set `VITE_API_BASE_URL` if your API runs on a different host/port.

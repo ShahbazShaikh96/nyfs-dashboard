@@ -5,3 +5,6 @@ nyfs/__pycache__/
 nyc_inspection_data.csv
 data/nyc_inspections_raw.csv
 data/nyc_inspections_clean.csv
+apps/api/.venv/
+apps/web/node_modules/
+apps/web/dist/

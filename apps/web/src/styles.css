@@ -1,0 +1,222 @@
+:root {
+  font-family: "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  color: #0f172a;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.layout {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.header p {
+  margin-top: 8px;
+  color: #334155;
+}
+
+.kpi-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi-card {
+  background: white;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.kpi-card h3 {
+  margin: 0;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.kpi-card p {
+  margin: 10px 0 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.main-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 12px;
+  min-height: 72vh;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  overflow: auto;
+}
+
+.panel-header h2 {
+  margin: 0;
+}
+
+.panel-header p {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.notice {
+  margin: 12px 0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+}
+
+.notice.pending {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+
+.notice.ok {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.field select,
+.field input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px;
+  font: inherit;
+}
+
+.field select[multiple] {
+  min-height: 94px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #0f766e;
+  color: white;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.map-panel {
+  position: relative;
+  background: white;
+  border: 1px solid #dbe4ef;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.map-shell {
+  width: 100%;
+  height: 72vh;
+}
+
+.marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.2);
+}
+
+.tooltip-card {
+  min-width: 200px;
+}
+
+.tooltip-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.tooltip-row {
+  font-size: 0.84rem;
+  color: #334155;
+  margin-top: 2px;
+}
+
+.status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 5;
+  background: rgba(15, 23, 42, 0.9);
+  color: white;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 0.84rem;
+}
+
+.status.error {
+  background: rgba(153, 27, 27, 0.92);
+}
+
+@media (max-width: 1080px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    max-height: 42vh;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
