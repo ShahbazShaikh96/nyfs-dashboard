@@ -9,8 +9,24 @@ from nyfs.data import GRADE_COLORS, GRADE_ORDER, RISK_COLORS, DashboardData, loa
 
 
 MAP_POINT_LIMIT = 5000
-DEFAULT_GRADE_SELECTION = ["A", "B", "C", "Pending / Not Yet Graded", "Missing / Unknown"]
-DEFAULT_RISK_SELECTION = ["Low", "Medium", "High"]
+FILTER_FIELDS = [
+    "boroughs",
+    "cuisines",
+    "grades",
+    "risks",
+    "critical_filter",
+    "date_range",
+    "search_text",
+]
+DEFAULT_APPLIED_FILTERS = {
+    "boroughs": [],
+    "cuisines": [],
+    "grades": [],
+    "risks": [],
+    "critical_filter": "All restaurants",
+    "date_range": None,
+    "search_text": "",
+}
 
 
 def _inject_styles() -> None:
@@ -36,6 +52,15 @@ def _inject_styles() -> None:
             color: #475569;
             font-size: 0.96rem;
         }
+        .filter-hint {
+            font-size: 0.88rem;
+            color: #475569;
+            padding: 0.55rem 0.7rem;
+            border: 1px solid #dbe7ee;
+            border-radius: 10px;
+            background: #f8fbfd;
+            margin-bottom: 0.75rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -58,94 +83,53 @@ def _format_timestamp(raw_value: str | None) -> str:
 
 def _reset_filters() -> None:
     keys = [
-        "borough_filter",
-        "cuisine_filter",
-        "grade_filter",
-        "risk_filter",
-        "critical_filter",
-        "date_filter",
-        "restaurant_query",
+        "staged_boroughs",
+        "staged_cuisines",
+        "staged_grades",
+        "staged_risks",
+        "staged_critical_filter",
+        "staged_date_range",
+        "staged_search_text",
         "halal_filter",
         "map_color_mode",
+        "applied_filters",
+        "has_applied_filters",
     ]
     for key in keys:
         st.session_state.pop(key, None)
 
 
-def _render_sidebar(latest_df: pd.DataFrame, metadata: dict[str, str]) -> pd.DataFrame:
-    st.sidebar.title("Filter Restaurants")
-    st.sidebar.caption("Use these controls to narrow the current map and charts.")
-    if st.sidebar.button("Reset filters", use_container_width=True):
-        _reset_filters()
-        st.rerun()
+def _init_filter_state() -> None:
+    if "applied_filters" not in st.session_state:
+        st.session_state["applied_filters"] = DEFAULT_APPLIED_FILTERS.copy()
+    if "has_applied_filters" not in st.session_state:
+        st.session_state["has_applied_filters"] = False
 
-    boroughs = sorted(latest_df["borough"].dropna().unique().tolist())
-    cuisines = sorted(latest_df["cuisine_type"].dropna().unique().tolist())
 
-    selected_boroughs = st.sidebar.multiselect(
-        "Borough",
-        boroughs,
-        default=boroughs,
-        key="borough_filter",
-    )
-    selected_cuisines = st.sidebar.multiselect(
-        "Cuisine type",
-        cuisines,
-        default=cuisines,
-        key="cuisine_filter",
-    )
-    selected_grades = st.sidebar.multiselect(
-        "Inspection grade",
-        DEFAULT_GRADE_SELECTION,
-        default=DEFAULT_GRADE_SELECTION,
-        key="grade_filter",
-    )
-    selected_risks = st.sidebar.multiselect(
-        "Risk level",
-        DEFAULT_RISK_SELECTION,
-        default=DEFAULT_RISK_SELECTION,
-        key="risk_filter",
-    )
-    critical_filter = st.sidebar.selectbox(
-        "Critical violations",
-        ["All restaurants", "Has critical violations", "No critical violations"],
-        key="critical_filter",
-    )
+def _apply_filters_to_df(
+    latest_df: pd.DataFrame,
+    applied_filters: dict[str, object],
+) -> pd.DataFrame:
+    filtered = latest_df.copy()
 
-    min_date = latest_df["inspection_date"].min()
-    max_date = latest_df["inspection_date"].max()
-    selected_dates = st.sidebar.date_input(
-        "Latest inspection date",
-        value=(min_date.date(), max_date.date()),
-        min_value=min_date.date(),
-        max_value=max_date.date(),
-        key="date_filter",
-    )
-    search_text = st.sidebar.text_input(
-        "Restaurant name",
-        key="restaurant_query",
-        placeholder="Search for a restaurant",
-    ).strip()
+    selected_boroughs = applied_filters.get("boroughs") or []
+    selected_cuisines = applied_filters.get("cuisines") or []
+    selected_grades = applied_filters.get("grades") or []
+    selected_risks = applied_filters.get("risks") or []
+    critical_filter = applied_filters.get("critical_filter") or "All restaurants"
+    selected_dates = applied_filters.get("date_range")
+    search_text = (applied_filters.get("search_text") or "").strip()
 
-    halal_disabled_label = "Not supported in source data"
-    st.sidebar.selectbox(
-        "Halal filter",
-        [halal_disabled_label],
-        key="halal_filter",
-        help=metadata.get(
-            "halal_note",
-            "Halal filtering is not available because the inspection dataset does not include a reliable halal field.",
-        ),
-    )
+    if selected_boroughs:
+        filtered = filtered[filtered["borough"].isin(selected_boroughs)]
+    if selected_cuisines:
+        filtered = filtered[filtered["cuisine_type"].isin(selected_cuisines)]
+    if selected_grades:
+        filtered = filtered[filtered["inspection_grade"].isin(selected_grades)]
+    if selected_risks:
+        filtered = filtered[filtered["risk_level"].isin(selected_risks)]
 
-    filtered = latest_df[
-        latest_df["borough"].isin(selected_boroughs)
-        & latest_df["cuisine_type"].isin(selected_cuisines)
-        & latest_df["inspection_grade"].isin(selected_grades)
-        & latest_df["risk_level"].isin(selected_risks)
-    ].copy()
-
-    if len(selected_dates) == 2:
+    if isinstance(selected_dates, (list, tuple)) and len(selected_dates) == 2:
         start_date, end_date = selected_dates
         filtered = filtered[
             filtered["inspection_date"].dt.date.between(start_date, end_date)
@@ -161,7 +145,123 @@ def _render_sidebar(latest_df: pd.DataFrame, metadata: dict[str, str]) -> pd.Dat
             filtered["restaurant_name"].str.contains(search_text, case=False, na=False)
         ]
 
+    return filtered
+
+
+def _render_sidebar(latest_df: pd.DataFrame, metadata: dict[str, str]) -> pd.DataFrame:
+    _init_filter_state()
+    st.sidebar.title("Filter Restaurants")
+    st.sidebar.caption("Choose filters, then click Apply to update the map and charts.")
+    if st.sidebar.button("Reset filters", use_container_width=True):
+        _reset_filters()
+        st.rerun()
+
+    boroughs = sorted(latest_df["borough"].dropna().unique().tolist())
+    cuisines = sorted(latest_df["cuisine_type"].dropna().unique().tolist())
+    all_grades = ["A", "B", "C", "Pending / Not Yet Graded", "Missing / Unknown"]
+    all_risks = ["Low", "Medium", "High"]
+    min_date = latest_df["inspection_date"].min()
+    max_date = latest_df["inspection_date"].max()
+
+    st.sidebar.markdown(
+        '<div class="filter-hint">No filters are selected by default. '
+        "Use Apply when you are ready.</div>",
+        unsafe_allow_html=True,
+    )
+
+    with st.sidebar.form("filter_form"):
+        selected_boroughs = st.multiselect(
+            "Borough",
+            boroughs,
+            default=st.session_state.get("staged_boroughs", []),
+            key="staged_boroughs",
+        )
+        selected_cuisines = st.multiselect(
+            "Cuisine type",
+            cuisines,
+            default=st.session_state.get("staged_cuisines", []),
+            key="staged_cuisines",
+        )
+        selected_grades = st.multiselect(
+            "Inspection grade",
+            all_grades,
+            default=st.session_state.get("staged_grades", []),
+            key="staged_grades",
+        )
+        selected_risks = st.multiselect(
+            "Risk level",
+            all_risks,
+            default=st.session_state.get("staged_risks", []),
+            key="staged_risks",
+        )
+        critical_filter = st.selectbox(
+            "Critical violations",
+            ["All restaurants", "Has critical violations", "No critical violations"],
+            index=["All restaurants", "Has critical violations", "No critical violations"].index(
+                st.session_state.get("staged_critical_filter", "All restaurants")
+            ),
+            key="staged_critical_filter",
+        )
+
+        selected_dates = st.date_input(
+            "Latest inspection date",
+            value=st.session_state.get("staged_date_range"),
+            min_value=min_date.date(),
+            max_value=max_date.date(),
+            key="staged_date_range",
+        )
+        search_text = st.text_input(
+            "Restaurant name",
+            value=st.session_state.get("staged_search_text", ""),
+            key="staged_search_text",
+            placeholder="Search for a restaurant",
+        ).strip()
+        submitted = st.form_submit_button("Apply", use_container_width=True)
+
+    st.sidebar.selectbox(
+        "Halal filter",
+        ["Not supported in source data"],
+        key="halal_filter",
+        help=metadata.get(
+            "halal_note",
+            "Halal filtering is not available because the inspection dataset does not include a reliable halal field.",
+        ),
+    )
+    if submitted:
+        st.session_state["applied_filters"] = {
+            "boroughs": selected_boroughs,
+            "cuisines": selected_cuisines,
+            "grades": selected_grades,
+            "risks": selected_risks,
+            "critical_filter": critical_filter,
+            "date_range": selected_dates,
+            "search_text": search_text,
+        }
+        st.session_state["has_applied_filters"] = (
+            bool(selected_boroughs)
+            or bool(selected_cuisines)
+            or bool(selected_grades)
+            or bool(selected_risks)
+            or critical_filter != "All restaurants"
+            or bool(search_text)
+            or (
+                isinstance(selected_dates, (list, tuple))
+                and len(selected_dates) == 2
+                and (
+                    selected_dates[0] != min_date.date()
+                    or selected_dates[1] != max_date.date()
+                )
+            )
+        )
+
+    applied_filters = st.session_state["applied_filters"]
+    filtered = _apply_filters_to_df(latest_df, applied_filters)
+
     st.sidebar.markdown("---")
+    if st.session_state["has_applied_filters"]:
+        st.sidebar.caption("Applied filters are active.")
+    else:
+        st.sidebar.caption("Filters ready — click Apply.")
     st.sidebar.caption(
         "Risk level is a NYFS informational metric based on inspection score, critical violations, grade, recency, and repeated poor performance. It is not an official NYC label."
     )
@@ -228,6 +328,11 @@ def _render_map(filtered_df: pd.DataFrame) -> None:
     size_column = "critical_violations"
     map_df["map_marker_size"] = map_df[size_column].clip(lower=1)
 
+    map_df["display_grade"] = map_df["inspection_grade"].fillna("Missing / Unknown")
+    map_df["display_cuisine"] = map_df["cuisine_type"].fillna("Unknown")
+    map_df["display_location"] = map_df["borough"].fillna("Unknown")
+    map_df["display_rating"] = "Grade " + map_df["display_grade"].astype(str)
+
     fig = px.scatter_map(
         map_df,
         lat="latitude",
@@ -235,23 +340,32 @@ def _render_map(filtered_df: pd.DataFrame) -> None:
         color=color_column,
         color_discrete_map=color_map,
         hover_name="restaurant_name",
-        hover_data={
-            "borough": True,
-            "cuisine_type": True,
-            "inspection_grade": True,
-            "inspection_score": ":.0f",
-            "risk_level": True,
-            "critical_violation_label": True,
-            "inspection_date": "|%Y-%m-%d",
-            "full_address": True,
-            "latitude": False,
-            "longitude": False,
-        },
+        custom_data=[
+            "display_rating",
+            "display_cuisine",
+            "display_location",
+            "inspection_date",
+        ],
         size="map_marker_size",
         size_max=16,
         zoom=9.8,
         center={"lat": 40.7128, "lon": -74.0060},
         height=620,
+    )
+    fig.update_traces(
+        hovertemplate=(
+            "<b style='font-size:15px;'>%{hovertext}</b><br>"
+            "<span style='font-size:13px;'>Rating: %{customdata[0]}</span><br>"
+            "<span style='font-size:13px;'>Cuisine: %{customdata[1]}</span><br>"
+            "<span style='font-size:13px;'>Location: %{customdata[2]}</span><br>"
+            "<span style='font-size:12px;color:#475569;'>Latest inspection: %{customdata[3]|%Y-%m-%d}</span>"
+            "<extra></extra>"
+        ),
+        hoverlabel=dict(
+            bgcolor="white",
+            bordercolor="#CBD5E1",
+            font=dict(size=12, color="#0F172A"),
+        ),
     )
     fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), legend_title_text=color_mode)
     st.plotly_chart(fig, use_container_width=True)
@@ -340,6 +454,14 @@ def _render_charts(filtered_df: pd.DataFrame, inspections_df: pd.DataFrame) -> N
 
 def _render_top_risk_table(filtered_df: pd.DataFrame) -> None:
     st.subheader("Restaurants that merit a closer look")
+    sort_columns: list[str] = []
+    if "risk_score" in filtered_df.columns:
+        sort_columns.append("risk_score")
+    if "inspection_score" in filtered_df.columns:
+        sort_columns.append("inspection_score")
+    if not sort_columns:
+        sort_columns.append("restaurant_name")
+
     risk_table = filtered_df[
         [
             "restaurant_name",
@@ -351,7 +473,10 @@ def _render_top_risk_table(filtered_df: pd.DataFrame) -> None:
             "critical_violations",
             "inspection_date",
         ]
-    ].sort_values(["risk_score", "inspection_score"], ascending=[False, False]).head(15)
+    ].sort_values(
+        sort_columns,
+        ascending=[False] * len(sort_columns),
+    ).head(15)
     st.dataframe(
         risk_table,
         use_container_width=True,
