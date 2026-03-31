@@ -227,12 +227,39 @@ def refresh_dashboard_data(
         return persist_dashboard_store(raw_df=raw_df, source_label="socrata_api")
     except Exception as exc:
         LOGGER.warning("API refresh failed: %s", exc)
-        if not allow_fallback or not config.LOCAL_SOURCE_CSV.exists():
+        if not allow_fallback:
             raise
 
-        fallback_df = pd.read_csv(config.LOCAL_SOURCE_CSV, low_memory=False)
-        return persist_dashboard_store(
-            raw_df=fallback_df,
-            source_label="local_csv_fallback",
-            fallback_used=True,
-        )
+        if config.LOCAL_SOURCE_CSV.exists():
+            fallback_df = pd.read_csv(config.LOCAL_SOURCE_CSV, low_memory=False)
+            return persist_dashboard_store(
+                raw_df=fallback_df,
+                source_label="local_csv_fallback",
+                fallback_used=True,
+            )
+
+        # In CI/CD we may intentionally avoid committing the raw local source file.
+        # If processed cache files already exist, keep serving them instead of failing the run.
+        if (
+            config.LATEST_CACHE_CSV.exists()
+            and config.INSPECTIONS_CACHE_CSV.exists()
+        ):
+            existing_metadata: dict[str, Any] = {}
+            if config.REFRESH_METADATA_JSON.exists():
+                existing_metadata = json.loads(config.REFRESH_METADATA_JSON.read_text())
+            existing_metadata.update(
+                {
+                    "refreshed_at_utc": datetime.now(UTC).isoformat(),
+                    "source": "existing_cache_fallback",
+                    "fallback_used": True,
+                    "refresh_error": str(exc),
+                }
+            )
+            config.REFRESH_METADATA_JSON.write_text(json.dumps(existing_metadata, indent=2))
+            LOGGER.warning(
+                "API refresh failed and no local source CSV exists. "
+                "Retaining existing processed cache files."
+            )
+            return existing_metadata
+
+        raise
