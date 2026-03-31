@@ -13,9 +13,11 @@ const riskColors: Record<string, string> = {
 
 type Props = {
   restaurants: Restaurant[];
+  selectedRestaurantId: number | null;
+  onSelectRestaurant: (restaurantId: number) => void;
 };
 
-export function MapView({ restaurants }: Props) {
+export function MapView({ restaurants, selectedRestaurantId, onSelectRestaurant }: Props) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const hoveredRestaurant = useMemo(
     () => restaurants.find((r) => r.restaurant_id === hoveredId) ?? null,
@@ -39,10 +41,13 @@ export function MapView({ restaurants }: Props) {
           >
             <button
               type="button"
-              className="marker"
+              className={`marker ${
+                selectedRestaurantId === restaurant.restaurant_id ? "selected" : ""
+              }`}
               style={{ backgroundColor: riskColors[restaurant.risk_level] ?? "#64748B" }}
               onMouseEnter={() => setHoveredId(restaurant.restaurant_id)}
               onMouseLeave={() => setHoveredId(null)}
+              onClick={() => onSelectRestaurant(restaurant.restaurant_id)}
               aria-label={restaurant.restaurant_name}
             />
           </Marker>

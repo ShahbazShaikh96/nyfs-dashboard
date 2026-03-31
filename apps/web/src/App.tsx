@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchFilterOptions, fetchRestaurants } from "./api";
+import { fetchFilterOptions, fetchRestaurantHistory, fetchRestaurants, fetchSummary } from "./api";
 import { FilterPanel, type AppliedFilters } from "./components/FilterPanel";
+import { IntelligencePanel } from "./components/IntelligencePanel";
 import { MapView } from "./components/MapView";
-import type { FilterOptions, Restaurant } from "./types";
+import { RestaurantDrawer } from "./components/RestaurantDrawer";
+import type { FilterOptions, Restaurant, RestaurantHistoryResponse, SummaryResponse } from "./types";
 
 const defaultFilters: AppliedFilters = {
   borough: [],
@@ -17,8 +19,13 @@ const defaultFilters: AppliedFilters = {
 export default function App() {
   const [options, setOptions] = useState<FilterOptions | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(defaultFilters);
   const [totalRestaurants, setTotalRestaurants] = useState(0);
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
+  const [selectedHistory, setSelectedHistory] = useState<RestaurantHistoryResponse | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerLoading, setDrawerLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,9 +45,13 @@ export default function App() {
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchRestaurants(appliedFilters);
-        setRestaurants(result.restaurants);
-        setTotalRestaurants(result.total);
+        const [restaurantResult, summaryResult] = await Promise.all([
+          fetchRestaurants(appliedFilters),
+          fetchSummary(appliedFilters)
+        ]);
+        setRestaurants(restaurantResult.restaurants);
+        setTotalRestaurants(restaurantResult.total);
+        setSummary(summaryResult);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load restaurants.");
       } finally {
@@ -48,6 +59,22 @@ export default function App() {
       }
     })();
   }, [appliedFilters]);
+
+  useEffect(() => {
+    if (!selectedRestaurantId) return;
+    void (async () => {
+      setDrawerOpen(true);
+      setDrawerLoading(true);
+      try {
+        const history = await fetchRestaurantHistory(selectedRestaurantId);
+        setSelectedHistory(history);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load restaurant details.");
+      } finally {
+        setDrawerLoading(false);
+      }
+    })();
+  }, [selectedRestaurantId]);
 
   const kpi = useMemo(() => {
     if (!restaurants.length) {
@@ -86,14 +113,29 @@ export default function App() {
         </article>
       </section>
 
-      <main className="main-grid">
+      <main className="main-grid advanced">
         <FilterPanel options={options} applied={appliedFilters} onApply={setAppliedFilters} />
         <div className="map-panel">
           {loading ? <div className="status">Loading map data...</div> : null}
           {error ? <div className="status error">{error}</div> : null}
-          <MapView restaurants={restaurants} />
+          <MapView
+            restaurants={restaurants}
+            selectedRestaurantId={selectedRestaurantId}
+            onSelectRestaurant={setSelectedRestaurantId}
+          />
         </div>
+        <IntelligencePanel summary={summary} />
       </main>
+
+      <RestaurantDrawer
+        history={selectedHistory}
+        open={drawerOpen}
+        loading={drawerLoading}
+        onClose={() => {
+          setDrawerOpen(false);
+          setSelectedRestaurantId(null);
+        }}
+      />
     </div>
   );
 }

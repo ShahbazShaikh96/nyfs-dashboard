@@ -18,4 +18,7 @@ uvicorn main:app --reload --port 8080
 - `GET /api/v1/metadata`
 - `GET /api/v1/filters`
 - `GET /api/v1/restaurants`
+- `GET /api/v1/summary`
 - `GET /api/v1/restaurants/{restaurant_id}/history`
+
+`/api/v1/restaurants` supports server-side pagination via `offset` and `limit` query params.

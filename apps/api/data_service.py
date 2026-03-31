@@ -55,6 +55,7 @@ def invalidate_cache() -> None:
     load_latest_restaurants.cache_clear()
     load_restaurant_history.cache_clear()
     load_metadata.cache_clear()
+    cached_filtered_restaurants.cache_clear()
 
 
 def available_filters(df: pd.DataFrame) -> dict[str, list[str]]:
@@ -107,6 +108,32 @@ def apply_restaurant_filters(
             filtered = filtered[filtered["inspection_date"] <= end]
 
     return filtered
+
+
+@lru_cache(maxsize=128)
+def cached_filtered_restaurants(
+    boroughs: tuple[str, ...],
+    cuisines: tuple[str, ...],
+    grades: tuple[str, ...],
+    risk_levels: tuple[str, ...],
+    critical_only: bool | None,
+    search: str,
+    start_date: str,
+    end_date: str,
+) -> pd.DataFrame:
+    """Cache filtered query results for repeated map requests with same parameters."""
+    df = load_latest_restaurants()
+    return apply_restaurant_filters(
+        df,
+        boroughs=list(boroughs) or None,
+        cuisines=list(cuisines) or None,
+        grades=list(grades) or None,
+        risk_levels=list(risk_levels) or None,
+        critical_only=critical_only,
+        search=search or None,
+        start_date=start_date or None,
+        end_date=end_date or None,
+    )
 
 
 def serialize_restaurants(dataframe: pd.DataFrame) -> list[dict[str, Any]]:
@@ -162,3 +189,47 @@ def serialize_history(history_df: pd.DataFrame) -> list[dict[str, Any]]:
             }
         )
     return points
+
+
+def build_summary(filtered_latest_df: pd.DataFrame, history_df: pd.DataFrame) -> dict[str, Any]:
+    borough_scores = (
+        filtered_latest_df.groupby("borough", as_index=False)["inspection_score"]
+        .mean()
+        .rename(columns={"inspection_score": "avg_score"})
+        .sort_values("avg_score", ascending=False)
+    )
+
+    grade_distribution = (
+        filtered_latest_df.groupby("inspection_grade", as_index=False)["restaurant_id"]
+        .count()
+        .rename(columns={"inspection_grade": "grade", "restaurant_id": "count"})
+        .sort_values("count", ascending=False)
+    )
+
+    top_cuisines_critical = (
+        filtered_latest_df.groupby("cuisine_type", as_index=False)["critical_violations"]
+        .sum()
+        .sort_values("critical_violations", ascending=False)
+        .head(10)
+    )
+
+    filtered_ids = filtered_latest_df["restaurant_id"].dropna().astype("Int64").unique().tolist()
+    scoped_history = history_df[history_df["restaurant_id"].isin(filtered_ids)].copy()
+    monthly_trend = (
+        scoped_history.dropna(subset=["inspection_date"])
+        .assign(month=lambda frame: frame["inspection_date"].dt.to_period("M").astype(str))
+        .groupby("month", as_index=False)
+        .agg(
+            avg_score=("inspection_score", "mean"),
+            inspections=("restaurant_id", "count"),
+        )
+        .sort_values("month")
+        .tail(12)
+    )
+
+    return {
+        "borough_scores": borough_scores.to_dict(orient="records"),
+        "grade_distribution": grade_distribution.to_dict(orient="records"),
+        "top_cuisines_critical": top_cuisines_critical.to_dict(orient="records"),
+        "monthly_trend": monthly_trend.to_dict(orient="records"),
+    }

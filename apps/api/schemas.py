@@ -31,6 +31,8 @@ class RestaurantFeature(BaseModel):
 
 class RestaurantsResponse(BaseModel):
     total: int
+    offset: int
+    limit: int
     applied_filters: dict[str, Any]
     restaurants: list[RestaurantFeature]
 
@@ -53,3 +55,31 @@ class RestaurantHistoryResponse(BaseModel):
     borough: str
     cuisine_type: str
     points: list[RestaurantHistoryPoint]
+
+
+class BoroughScorePoint(BaseModel):
+    borough: str
+    avg_score: float
+
+
+class GradeDistributionPoint(BaseModel):
+    grade: str
+    count: int
+
+
+class CuisineCriticalPoint(BaseModel):
+    cuisine_type: str
+    critical_violations: int
+
+
+class MonthlyTrendPoint(BaseModel):
+    month: str
+    avg_score: float
+    inspections: int
+
+
+class SummaryResponse(BaseModel):
+    borough_scores: list[BoroughScorePoint]
+    grade_distribution: list[GradeDistributionPoint]
+    top_cuisines_critical: list[CuisineCriticalPoint]
+    monthly_trend: list[MonthlyTrendPoint]

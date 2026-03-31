@@ -4,8 +4,9 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from data_service import (
-    apply_restaurant_filters,
     available_filters,
+    build_summary,
+    cached_filtered_restaurants,
     invalidate_cache,
     load_latest_restaurants,
     load_metadata,
@@ -13,7 +14,7 @@ from data_service import (
     serialize_history,
     serialize_restaurants,
 )
-from schemas import FilterOptions, RestaurantHistoryResponse, RestaurantsResponse
+from schemas import FilterOptions, RestaurantHistoryResponse, RestaurantsResponse, SummaryResponse
 from settings import DEFAULT_RESULT_LIMIT, MAX_RESULT_LIMIT
 
 
@@ -54,24 +55,27 @@ def restaurants(
     search: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
+    offset: int = 0,
     limit: int = DEFAULT_RESULT_LIMIT,
 ) -> RestaurantsResponse:
-    df = load_latest_restaurants()
-    filtered = apply_restaurant_filters(
-        df,
-        boroughs=borough or None,
-        cuisines=cuisine or None,
-        grades=grade or None,
-        risk_levels=risk or None,
-        critical_only=critical_only,
-        search=search,
-        start_date=start_date,
-        end_date=end_date,
+    filtered = cached_filtered_restaurants(
+        tuple(sorted(borough)),
+        tuple(sorted(cuisine)),
+        tuple(sorted(grade)),
+        tuple(sorted(risk)),
+        critical_only,
+        search or "",
+        start_date or "",
+        end_date or "",
     )
     filtered = filtered.sort_values(["risk_score", "inspection_score"], ascending=[False, False])
-    limited = filtered.head(max(1, min(limit, MAX_RESULT_LIMIT)))
+    safe_limit = max(1, min(limit, MAX_RESULT_LIMIT))
+    safe_offset = max(0, offset)
+    paged = filtered.iloc[safe_offset : safe_offset + safe_limit]
     return RestaurantsResponse(
         total=int(len(filtered)),
+        offset=safe_offset,
+        limit=safe_limit,
         applied_filters={
             "borough": borough,
             "cuisine": cuisine,
@@ -81,10 +85,36 @@ def restaurants(
             "search": search,
             "start_date": start_date,
             "end_date": end_date,
-            "limit": min(limit, MAX_RESULT_LIMIT),
+            "offset": safe_offset,
+            "limit": safe_limit,
         },
-        restaurants=serialize_restaurants(limited),
+        restaurants=serialize_restaurants(paged),
     )
+
+
+@app.get("/api/v1/summary", response_model=SummaryResponse)
+def summary(
+    borough: list[str] = Query(default=[]),
+    cuisine: list[str] = Query(default=[]),
+    grade: list[str] = Query(default=[]),
+    risk: list[str] = Query(default=[]),
+    critical_only: bool | None = None,
+    search: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> SummaryResponse:
+    filtered = cached_filtered_restaurants(
+        tuple(sorted(borough)),
+        tuple(sorted(cuisine)),
+        tuple(sorted(grade)),
+        tuple(sorted(risk)),
+        critical_only,
+        search or "",
+        start_date or "",
+        end_date or "",
+    )
+    summary_data = build_summary(filtered, load_restaurant_history())
+    return SummaryResponse(**summary_data)
 
 
 @app.get("/api/v1/restaurants/{restaurant_id}/history", response_model=RestaurantHistoryResponse)
