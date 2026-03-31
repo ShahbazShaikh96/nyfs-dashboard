@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from io import StringIO
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -17,13 +15,13 @@ from nyfs.data import create_features, load_data
 LOGGER = logging.getLogger(__name__)
 
 
-def _headers() -> dict[str, str]:
+def _headers(include_token: bool = True) -> dict[str, str]:
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "User-Agent": "nyfs-dashboard/1.0",
     }
-    if config.SOCRATA_APP_TOKEN:
+    if include_token and config.SOCRATA_APP_TOKEN:
         headers["X-App-Token"] = config.SOCRATA_APP_TOKEN
     return headers
 
@@ -63,10 +61,19 @@ def _fetch_v3_page(
     }
     response = session.post(
         config.SOCRATA_QUERY_URL,
-        headers=_headers(),
+        headers=_headers(include_token=True),
         json=payload,
         timeout=timeout_seconds,
     )
+    if response.status_code == 403 and config.SOCRATA_APP_TOKEN:
+        # Retry unauthenticated in case the provided token is invalid or expired.
+        LOGGER.warning("v3 request returned 403; retrying once without app token.")
+        response = session.post(
+            config.SOCRATA_QUERY_URL,
+            headers=_headers(include_token=False),
+            json=payload,
+            timeout=timeout_seconds,
+        )
     response.raise_for_status()
     return _extract_v3_rows(response.json())
 
@@ -80,16 +87,26 @@ def _fetch_legacy_page(
     params = {
         "$limit": page_size,
         "$offset": offset,
-        "$order": "camis, inspection_date, record_date",
     }
     response = session.get(
         config.SOCRATA_RESOURCE_URL,
-        headers=_headers(),
+        headers=_headers(include_token=True),
         params=params,
         timeout=timeout_seconds,
     )
+    if response.status_code == 403 and config.SOCRATA_APP_TOKEN:
+        LOGGER.warning("legacy request returned 403; retrying once without app token.")
+        response = session.get(
+            config.SOCRATA_RESOURCE_URL,
+            headers=_headers(include_token=False),
+            params=params,
+            timeout=timeout_seconds,
+        )
     response.raise_for_status()
-    return pd.read_csv(StringIO(response.text))
+    rows = response.json()
+    if not isinstance(rows, list):
+        raise ValueError("Legacy API returned an unexpected payload format.")
+    return pd.DataFrame(rows)
 
 
 def fetch_all_data(
@@ -105,31 +122,56 @@ def fetch_all_data(
     session = requests.Session()
     frames: list[pd.DataFrame] = []
 
-    LOGGER.info("Starting data refresh via Socrata API", extra={"mode": mode})
-    if mode == "v3":
+    LOGGER.info("Starting data refresh via Socrata API mode=%s", mode)
+
+    def _fetch_v3_all() -> list[pd.DataFrame]:
+        local_frames: list[pd.DataFrame] = []
         page_number = 1
         while True:
             page = _fetch_v3_page(session, page_number, batch_size, timeout)
-            LOGGER.info("Fetched page %s with %s rows", page_number, len(page))
+            LOGGER.info("Fetched v3 page %s with %s rows", page_number, len(page))
             if page.empty:
                 break
-            frames.append(page)
+            local_frames.append(page)
             if len(page) < batch_size:
                 break
             page_number += 1
-    elif mode == "legacy":
+        return local_frames
+
+    def _fetch_legacy_all() -> list[pd.DataFrame]:
+        local_frames: list[pd.DataFrame] = []
         offset = 0
         while True:
             page = _fetch_legacy_page(session, offset, batch_size, timeout)
-            LOGGER.info("Fetched offset %s with %s rows", offset, len(page))
+            LOGGER.info("Fetched legacy offset %s with %s rows", offset, len(page))
             if page.empty:
                 break
-            frames.append(page)
+            local_frames.append(page)
             if len(page) < batch_size:
                 break
             offset += batch_size
-    else:
-        raise ValueError("api_mode must be 'v3' or 'legacy'.")
+        return local_frames
+
+    try:
+        if mode == "v3":
+            frames = _fetch_v3_all()
+        elif mode == "legacy":
+            frames = _fetch_legacy_all()
+        elif mode == "auto":
+            try:
+                frames = _fetch_v3_all()
+            except Exception as first_error:
+                LOGGER.warning("v3 mode failed (%s). Falling back to legacy mode.", first_error)
+                frames = _fetch_legacy_all()
+        else:
+            raise ValueError("api_mode must be 'auto', 'v3', or 'legacy'.")
+    except requests.HTTPError as http_error:
+        if http_error.response is not None and http_error.response.status_code == 403:
+            raise RuntimeError(
+                "Socrata API returned 403 Forbidden. "
+                "Check SOCRATA_APP_TOKEN scope/validity or remove invalid token secret."
+            ) from http_error
+        raise
 
     if not frames:
         raise RuntimeError("No data was returned by the API.")

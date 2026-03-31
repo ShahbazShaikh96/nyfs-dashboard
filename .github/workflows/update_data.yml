@@ -31,8 +31,8 @@ jobs:
         env:
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
         run: |
-          # Use the SODA-style legacy mode in CI so the scheduled job explicitly pages with $limit/$offset.
-          python update_data.py --api-mode legacy --no-fallback
+          # Auto mode tries v3 query pagination first, then falls back to legacy $limit/$offset if needed.
+          python update_data.py --api-mode auto --no-fallback
 
       - name: Commit updated data files
         run: |

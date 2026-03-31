@@ -10,9 +10,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Refresh NYFS local dashboard data.")
     parser.add_argument(
         "--api-mode",
-        choices=["v3", "legacy"],
-        default="v3",
-        help="Use the Socrata v3 query endpoint or the legacy SODA $limit/$offset mode.",
+        choices=["auto", "v3", "legacy"],
+        default="auto",
+        help="Use auto mode (v3 then legacy), explicit v3, or explicit legacy SODA $limit/$offset mode.",
     )
     parser.add_argument(
         "--no-fallback",

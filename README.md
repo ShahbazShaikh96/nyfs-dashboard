@@ -57,7 +57,7 @@ The repository includes a GitHub Actions workflow at `.github/workflows/update_d
 
 - It runs once every day on a schedule.
 - It can also be run manually from the GitHub Actions tab.
-- It installs dependencies, runs `python update_data.py --api-mode legacy --no-fallback`, and commits only the deployable processed files back to the repository if anything changed.
+- It installs dependencies, runs `python update_data.py --api-mode auto --no-fallback` (tries v3 first, then legacy), and commits only the deployable processed files back to the repository if anything changed.
 - When that commit lands on GitHub, Streamlit Community Cloud can automatically redeploy the app with fresher data.
 
 ## Push To GitHub
