@@ -36,6 +36,9 @@ export function RestaurantDrawer({ history, open, loading, onClose }: Props) {
                 restaurantName={history.restaurant_name}
                 cuisineType={history.cuisine_type}
               />
+              {history.photo_source_label ? (
+                <div className="photo-source">{history.photo_source_label}</div>
+              ) : null}
               <div className="drawer-profile-text">
                 <div>
                   <strong>Street:</strong> {history.street_name}

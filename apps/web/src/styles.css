@@ -255,6 +255,15 @@ body {
   background: rgba(153, 27, 27, 0.92);
 }
 
+.status.mobile-hint {
+  left: auto;
+  right: 12px;
+  top: auto;
+  bottom: 12px;
+  max-width: 320px;
+  background: rgba(2, 132, 199, 0.92);
+}
+
 .intel-panel {
   background: white;
   border: 1px solid #dbe4ef;
@@ -400,6 +409,12 @@ body {
   color: #334155;
 }
 
+.photo-source {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
 .history-card {
   background: white;
   border: 1px solid #e2e8f0;
@@ -469,5 +484,14 @@ body {
 @media (max-width: 680px) {
   .kpi-grid {
     grid-template-columns: 1fr;
+  }
+
+  .map-shell {
+    height: 68vh;
+  }
+
+  .status.mobile-hint {
+    max-width: 250px;
+    font-size: 0.76rem;
   }
 }

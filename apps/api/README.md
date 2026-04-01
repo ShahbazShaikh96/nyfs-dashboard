@@ -22,3 +22,13 @@ uvicorn main:app --reload --port 8080
 - `GET /api/v1/restaurants/{restaurant_id}/history`
 
 `/api/v1/restaurants` supports server-side pagination via `offset` and `limit` query params.
+
+## Optional Photo Enrichment
+
+Restaurant detail supports optional third-party photo enrichment for selected restaurants only.
+
+- Provider: Foursquare Places API
+- Env var: `FOURSQUARE_API_KEY`
+- Cache file: `NYFS_PHOTO_CACHE_PATH` (defaults to temp directory)
+
+If no API key is set, the API continues to work and returns `photo_url: null`.

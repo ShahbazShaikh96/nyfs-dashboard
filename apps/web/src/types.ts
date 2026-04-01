@@ -59,5 +59,6 @@ export type RestaurantHistoryResponse = {
   full_address: string;
   street_name: string;
   photo_url: string | null;
+  photo_source_label: string | null;
   points: RestaurantHistoryPoint[];
 };

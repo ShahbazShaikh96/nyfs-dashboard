@@ -59,6 +59,7 @@ class RestaurantHistoryResponse(BaseModel):
     full_address: str
     street_name: str
     photo_url: str | None = None
+    photo_source_label: str | None = None
     points: list[RestaurantHistoryPoint]
 
 

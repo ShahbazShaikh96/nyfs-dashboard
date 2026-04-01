@@ -16,7 +16,22 @@ const defaultFilters: AppliedFilters = {
   limit: 5000
 };
 
+function useIsMobile(breakpoint = 768): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(() => window.innerWidth <= breakpoint);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const update = () => setIsMobile(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function App() {
+  const isMobile = useIsMobile();
   const [options, setOptions] = useState<FilterOptions | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
@@ -45,9 +60,14 @@ export default function App() {
       setLoading(true);
       setError(null);
       try {
+        const mobileSafeLimit = isMobile ? 1200 : 5000;
+        const requestFilters = {
+          ...appliedFilters,
+          limit: Math.min(appliedFilters.limit, mobileSafeLimit)
+        };
         const [restaurantResult, summaryResult] = await Promise.all([
-          fetchRestaurants(appliedFilters),
-          fetchSummary(appliedFilters)
+          fetchRestaurants(requestFilters),
+          fetchSummary(requestFilters)
         ]);
         setRestaurants(restaurantResult.restaurants);
         setTotalRestaurants(restaurantResult.total);
@@ -58,7 +78,7 @@ export default function App() {
         setLoading(false);
       }
     })();
-  }, [appliedFilters]);
+  }, [appliedFilters, isMobile]);
 
   useEffect(() => {
     if (!selectedRestaurantId) return;
@@ -91,6 +111,11 @@ export default function App() {
     };
   }, [restaurants]);
 
+  const renderedRestaurants = useMemo(() => {
+    if (!isMobile) return restaurants;
+    return restaurants.slice(0, 800);
+  }, [restaurants, isMobile]);
+
   return (
     <div className="layout">
       <header className="header">
@@ -118,10 +143,17 @@ export default function App() {
         <div className="map-panel">
           {loading ? <div className="status">Loading map data...</div> : null}
           {error ? <div className="status error">{error}</div> : null}
+          {isMobile && restaurants.length > renderedRestaurants.length ? (
+            <div className="status mobile-hint">
+              Mobile performance mode: showing top {renderedRestaurants.length.toLocaleString()}{" "}
+              restaurants. Refine filters to narrow further.
+            </div>
+          ) : null}
           <MapView
-            restaurants={restaurants}
+            restaurants={renderedRestaurants}
             selectedRestaurantId={selectedRestaurantId}
             onSelectRestaurant={setSelectedRestaurantId}
+            mobileMode={isMobile}
           />
         </div>
         <IntelligencePanel summary={summary} />

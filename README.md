@@ -132,6 +132,19 @@ After `nyfs-api` is deployed, copy its public URL and set this in `nyfs-web`:
 
 Then redeploy `nyfs-web`.
 
+### Optional third-party photo enrichment (selected restaurant only)
+
+If you want real restaurant photos in the detail drawer, set this env var on `nyfs-api`:
+
+- `FOURSQUARE_API_KEY=<your_key>`
+
+Behavior:
+
+- The API enriches photo only for the selected restaurant detail endpoint.
+- Results are cached locally to reduce provider calls.
+- UI labels this as third-party info.
+- If no key is set, dashboard still works with placeholder image.
+
 ### Verify deployment
 
 1. API health check:
@@ -141,6 +154,7 @@ Then redeploy `nyfs-web`.
 3. Functional checks:
    - map points load
    - filters apply
+   - mobile performance mode loads fewer map points for faster render
    - intelligence panel renders
    - clicking a marker opens detail drawer/history
 

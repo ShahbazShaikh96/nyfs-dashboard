@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 
 
@@ -13,3 +15,12 @@ METADATA_PATH = DATA_DIR / "refresh_metadata.json"
 
 DEFAULT_RESULT_LIMIT = 5000
 MAX_RESULT_LIMIT = 12000
+
+FOURSQUARE_API_KEY = os.getenv("FOURSQUARE_API_KEY", "").strip()
+PHOTO_ENRICHMENT_ENABLED = bool(FOURSQUARE_API_KEY)
+PHOTO_CACHE_PATH = Path(
+    os.getenv(
+        "NYFS_PHOTO_CACHE_PATH",
+        str(Path(tempfile.gettempdir()) / "nyfs_photo_cache.json"),
+    )
+)

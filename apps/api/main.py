@@ -14,6 +14,7 @@ from data_service import (
     serialize_history,
     serialize_restaurants,
 )
+from photo_provider import photo_provider
 from schemas import FilterOptions, RestaurantHistoryResponse, RestaurantsResponse, SummaryResponse
 from settings import DEFAULT_RESULT_LIMIT, MAX_RESULT_LIMIT
 
@@ -129,6 +130,14 @@ def restaurant_history(restaurant_id: int) -> RestaurantHistoryResponse:
         "inspection_date", ascending=False
     )
     current = match.iloc[0]
+    latitude = float(current["latitude"]) if "latitude" in current and current["latitude"] == current["latitude"] else None
+    longitude = float(current["longitude"]) if "longitude" in current and current["longitude"] == current["longitude"] else None
+    photo_url, photo_source = photo_provider.get_photo_for_restaurant(
+        restaurant_id=restaurant_id,
+        restaurant_name=str(current["restaurant_name"]),
+        latitude=latitude,
+        longitude=longitude,
+    )
     return RestaurantHistoryResponse(
         restaurant_id=restaurant_id,
         restaurant_name=str(current["restaurant_name"]),
@@ -136,7 +145,10 @@ def restaurant_history(restaurant_id: int) -> RestaurantHistoryResponse:
         cuisine_type=str(current["cuisine_type"]),
         full_address=str(current["full_address"]),
         street_name=str(current.get("street_name", current["full_address"])),
-        photo_url=None,
+        photo_url=photo_url,
+        photo_source_label=(
+            f"Third-party photo/info via {photo_source}" if photo_source else None
+        ),
         points=serialize_history(points_df),
     )
 

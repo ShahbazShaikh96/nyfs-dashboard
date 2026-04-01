@@ -17,6 +17,7 @@ type Props = {
   restaurants: Restaurant[];
   selectedRestaurantId: number | null;
   onSelectRestaurant: (restaurantId: number) => void;
+  mobileMode: boolean;
 };
 
 const standardStyle = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -42,13 +43,18 @@ const realisticStyle: StyleSpecification = {
   ]
 };
 
-export function MapView({ restaurants, selectedRestaurantId, onSelectRestaurant }: Props) {
+export function MapView({ restaurants, selectedRestaurantId, onSelectRestaurant, mobileMode }: Props) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [mapTheme, setMapTheme] = useState<"standard" | "realistic">("realistic");
   const hoveredRestaurant = useMemo(
     () => restaurants.find((r) => r.restaurant_id === hoveredId) ?? null,
     [hoveredId, restaurants]
   );
+  const selectedRestaurant = useMemo(
+    () => restaurants.find((r) => r.restaurant_id === selectedRestaurantId) ?? null,
+    [selectedRestaurantId, restaurants]
+  );
+  const activePopupRestaurant = mobileMode ? selectedRestaurant : hoveredRestaurant;
 
   return (
     <div className="map-shell">
@@ -87,18 +93,20 @@ export function MapView({ restaurants, selectedRestaurantId, onSelectRestaurant 
                 selectedRestaurantId === restaurant.restaurant_id ? "selected" : ""
               }`}
               style={{ backgroundColor: riskColors[restaurant.risk_level] ?? "#64748B" }}
-              onMouseEnter={() => setHoveredId(restaurant.restaurant_id)}
-              onMouseLeave={() => setHoveredId(null)}
+              onMouseEnter={
+                mobileMode ? undefined : () => setHoveredId(restaurant.restaurant_id)
+              }
+              onMouseLeave={mobileMode ? undefined : () => setHoveredId(null)}
               onClick={() => onSelectRestaurant(restaurant.restaurant_id)}
               aria-label={restaurant.restaurant_name}
             />
           </Marker>
         ))}
 
-        {hoveredRestaurant ? (
+        {activePopupRestaurant ? (
           <Popup
-            longitude={hoveredRestaurant.longitude}
-            latitude={hoveredRestaurant.latitude}
+            longitude={activePopupRestaurant.longitude}
+            latitude={activePopupRestaurant.latitude}
             closeButton={false}
             closeOnClick={false}
             anchor="top"
@@ -106,18 +114,18 @@ export function MapView({ restaurants, selectedRestaurantId, onSelectRestaurant 
           >
             <div className="tooltip-card">
               <RestaurantPhoto
-                photoUrl={hoveredRestaurant.photo_url}
-                restaurantName={hoveredRestaurant.restaurant_name}
-                cuisineType={hoveredRestaurant.cuisine_type}
+                photoUrl={activePopupRestaurant.photo_url}
+                restaurantName={activePopupRestaurant.restaurant_name}
+                cuisineType={activePopupRestaurant.cuisine_type}
               />
-              <div className="tooltip-title">{hoveredRestaurant.restaurant_name}</div>
+              <div className="tooltip-title">{activePopupRestaurant.restaurant_name}</div>
               <div className="tooltip-row">
-                Rating: Grade {hoveredRestaurant.inspection_grade || "Pending"}
+                Rating: Grade {activePopupRestaurant.inspection_grade || "Pending"}
               </div>
-              <div className="tooltip-row">Cuisine: {hoveredRestaurant.cuisine_type}</div>
-              <div className="tooltip-row">Location: {hoveredRestaurant.borough}</div>
-              <div className="tooltip-row">Street: {hoveredRestaurant.street_name}</div>
-              <div className="tooltip-row">{hoveredRestaurant.full_address}</div>
+              <div className="tooltip-row">Cuisine: {activePopupRestaurant.cuisine_type}</div>
+              <div className="tooltip-row">Location: {activePopupRestaurant.borough}</div>
+              <div className="tooltip-row">Street: {activePopupRestaurant.street_name}</div>
+              <div className="tooltip-row">{activePopupRestaurant.full_address}</div>
             </div>
           </Popup>
         ) : null}
