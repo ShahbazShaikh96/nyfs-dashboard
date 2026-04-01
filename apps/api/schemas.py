@@ -25,6 +25,8 @@ class RestaurantFeature(BaseModel):
     critical_violations: int
     latest_inspection_date: str | None
     full_address: str
+    street_name: str
+    photo_url: str | None = None
     latitude: float
     longitude: float
 
@@ -54,6 +56,9 @@ class RestaurantHistoryResponse(BaseModel):
     restaurant_name: str
     borough: str
     cuisine_type: str
+    full_address: str
+    street_name: str
+    photo_url: str | None = None
     points: list[RestaurantHistoryPoint]
 
 

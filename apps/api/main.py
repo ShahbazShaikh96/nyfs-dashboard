@@ -134,6 +134,9 @@ def restaurant_history(restaurant_id: int) -> RestaurantHistoryResponse:
         restaurant_name=str(current["restaurant_name"]),
         borough=str(current["borough"]),
         cuisine_type=str(current["cuisine_type"]),
+        full_address=str(current["full_address"]),
+        street_name=str(current.get("street_name", current["full_address"])),
+        photo_url=None,
         points=serialize_history(points_df),
     )
 

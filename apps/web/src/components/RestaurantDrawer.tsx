@@ -1,4 +1,5 @@
 import type { RestaurantHistoryResponse } from "../types";
+import { RestaurantPhoto } from "./RestaurantPhoto";
 
 type Props = {
   history: RestaurantHistoryResponse | null;
@@ -29,6 +30,21 @@ export function RestaurantDrawer({ history, open, loading, onClose }: Props) {
 
         {!loading && history ? (
           <div className="drawer-body">
+            <section className="drawer-profile">
+              <RestaurantPhoto
+                photoUrl={history.photo_url}
+                restaurantName={history.restaurant_name}
+                cuisineType={history.cuisine_type}
+              />
+              <div className="drawer-profile-text">
+                <div>
+                  <strong>Street:</strong> {history.street_name}
+                </div>
+                <div>
+                  <strong>Address:</strong> {history.full_address}
+                </div>
+              </div>
+            </section>
             {history.points.slice(0, 12).map((point, index) => (
               <article key={`${point.inspection_date}-${index}`} className="history-card">
                 <div className="history-top">

@@ -11,6 +11,8 @@ export type Restaurant = {
   critical_violations: number;
   latest_inspection_date: string | null;
   full_address: string;
+  street_name: string;
+  photo_url: string | null;
   latitude: number;
   longitude: number;
 };
@@ -54,5 +56,8 @@ export type RestaurantHistoryResponse = {
   restaurant_name: string;
   borough: string;
   cuisine_type: string;
+  full_address: string;
+  street_name: string;
+  photo_url: string | null;
   points: RestaurantHistoryPoint[];
 };

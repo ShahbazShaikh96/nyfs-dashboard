@@ -20,6 +20,17 @@ def _load_csv(path: str, parse_dates: list[str]) -> pd.DataFrame:
     return dataframe
 
 
+def _street_name(full_address: str) -> str:
+    # Keep this simple and deterministic: drop leading street number if present.
+    value = (full_address or "").strip()
+    if not value:
+        return "Unknown street"
+    parts = value.split(maxsplit=1)
+    if len(parts) == 2 and parts[0].replace("-", "").isdigit():
+        return parts[1]
+    return value
+
+
 @lru_cache(maxsize=1)
 def load_latest_restaurants() -> pd.DataFrame:
     df = _load_csv(str(LATEST_DATA_PATH), DATE_COLUMNS)
@@ -161,6 +172,8 @@ def serialize_restaurants(dataframe: pd.DataFrame) -> list[dict[str, Any]]:
                     else None
                 ),
                 "full_address": str(row["full_address"]),
+                "street_name": _street_name(str(row["full_address"])),
+                "photo_url": None,
                 "latitude": float(row["latitude"]),
                 "longitude": float(row["longitude"]),
             }
