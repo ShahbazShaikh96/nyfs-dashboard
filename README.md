@@ -110,3 +110,42 @@ npm run dev
 ```
 
 Set `VITE_API_BASE_URL` if your API runs on a different host/port.
+
+## Deploy Next-Gen Publicly (Render)
+
+This repo includes a Render blueprint: `render.yaml`.
+
+### One-time setup
+
+1. Open Render dashboard: https://dashboard.render.com/
+2. Click **New** -> **Blueprint**
+3. Connect GitHub repo: `ShahbazShaikh96/nyfs-dashboard`
+4. Render will detect `render.yaml` and create:
+   - `nyfs-api` (FastAPI web service)
+   - `nyfs-web` (static Vite site)
+
+### Required environment variable
+
+After `nyfs-api` is deployed, copy its public URL and set this in `nyfs-web`:
+
+- `VITE_API_BASE_URL=https://<your-nyfs-api-url>`
+
+Then redeploy `nyfs-web`.
+
+### Verify deployment
+
+1. API health check:
+   - `https://<your-nyfs-api-url>/health` should return `{"status":"ok"}`
+2. Web app:
+   - open `https://<your-nyfs-web-url>`
+3. Functional checks:
+   - map points load
+   - filters apply
+   - intelligence panel renders
+   - clicking a marker opens detail drawer/history
+
+### Notes
+
+- Free plans may spin down when idle and wake on first request.
+- Keep CORS open in API for now (already configured).
+- If you later split hosting (for example Vercel + Render), only `VITE_API_BASE_URL` changes.

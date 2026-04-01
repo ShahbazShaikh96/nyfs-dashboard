@@ -8,3 +8,4 @@ data/nyc_inspections_clean.csv
 apps/api/.venv/
 apps/web/node_modules/
 apps/web/dist/
+apps/web/.env
