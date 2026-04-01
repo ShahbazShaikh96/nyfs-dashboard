@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchFilterOptions, fetchRestaurantHistory, fetchRestaurants, fetchSummary } from "./api";
+import {
+  fetchFilterOptions,
+  fetchMetadata,
+  fetchRestaurantHistory,
+  fetchRestaurants,
+  fetchSummary
+} from "./api";
 import { FilterPanel, type AppliedFilters } from "./components/FilterPanel";
 import { IntelligencePanel } from "./components/IntelligencePanel";
 import { MapView } from "./components/MapView";
@@ -43,12 +49,17 @@ export default function App() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshMeta, setRefreshMeta] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     void (async () => {
       try {
-        const result = await fetchFilterOptions();
-        setOptions(result);
+        const [filterResult, metadataResult] = await Promise.all([
+          fetchFilterOptions(),
+          fetchMetadata().catch(() => null)
+        ]);
+        setOptions(filterResult);
+        setRefreshMeta(metadataResult);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load filter options.");
       }
@@ -116,11 +127,39 @@ export default function App() {
     return restaurants.slice(0, 800);
   }, [restaurants, isMobile]);
 
+  const refreshedAt = useMemo(() => {
+    const raw = refreshMeta?.refreshed_at_utc;
+    if (typeof raw !== "string" || !raw) return "Unknown";
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return "Unknown";
+    return parsed.toLocaleString();
+  }, [refreshMeta]);
+
+  const sourceLabel = useMemo(() => {
+    const raw = refreshMeta?.source;
+    if (typeof raw !== "string" || !raw) return "NYC Open Data";
+    return raw.replace(/_/g, " ");
+  }, [refreshMeta]);
+
   return (
     <div className="layout">
       <header className="header">
-        <h1>NYFS Intelligence Platform</h1>
-        <p>Map-first NYC restaurant hygiene intelligence for public decision-making.</p>
+        <div className="header-tag">NYC Public Food Safety Intelligence</div>
+        <h1>Find Safer Places to Eat Across New York City</h1>
+        <p className="header-lead">
+          This dashboard helps residents, tourists, and students quickly interpret NYC restaurant
+          inspection data using a map-first experience. Use filters to compare boroughs, cuisine
+          types, grades, and risk patterns before choosing where to eat.
+        </p>
+        <div className="header-chips">
+          <span className="chip">Data source: NYC Open Data</span>
+          <span className="chip">Last updated: {refreshedAt}</span>
+          <span className="chip">Pipeline status: {sourceLabel}</span>
+        </div>
+        <p className="header-note">
+          Dashboard risk level is an informational NYFS indicator derived from inspection history,
+          not an official NYC grade label.
+        </p>
       </header>
 
       <section className="kpi-grid">

@@ -20,13 +20,60 @@ body {
 
 .header h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: clamp(1.65rem, 2.4vw, 2.45rem);
   letter-spacing: -0.02em;
+  line-height: 1.16;
 }
 
-.header p {
-  margin-top: 8px;
+.header {
+  background: linear-gradient(135deg, #f8fffb 0%, #eef5ff 100%);
+  border: 1px solid #dbe4ef;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.header-tag {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #0f766e;
+  background: #ecfeff;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 4px 10px;
+  margin-bottom: 8px;
+}
+
+.header-lead {
+  margin-top: 10px;
   color: #334155;
+  max-width: 980px;
+  line-height: 1.45;
+}
+
+.header-chips {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.header-note {
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .kpi-grid {
@@ -478,6 +525,10 @@ body {
 
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .header {
+    padding: 14px;
   }
 }
 

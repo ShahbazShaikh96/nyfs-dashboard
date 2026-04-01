@@ -39,6 +39,12 @@ export async function fetchFilterOptions(): Promise<FilterOptions> {
   return response.json();
 }
 
+export async function fetchMetadata(): Promise<Record<string, unknown>> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/metadata`);
+  if (!response.ok) throw new Error("Failed to load refresh metadata.");
+  return response.json();
+}
+
 export async function fetchRestaurants(filters: QueryFilters): Promise<RestaurantsResponse> {
   const query = createQueryString(filters);
   const response = await fetch(`${API_BASE_URL}/api/v1/restaurants?${query}`);
