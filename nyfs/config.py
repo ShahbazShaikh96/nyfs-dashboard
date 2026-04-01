@@ -11,7 +11,6 @@ SOCRATA_RESOURCE_URL = f"https://data.cityofnewyork.us/resource/{DATASET_ID}.jso
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
-STREAMLIT_DIR = ROOT_DIR / ".streamlit"
 
 LOCAL_SOURCE_CSV = ROOT_DIR / "nyc_inspection_data.csv"
 RAW_CACHE_CSV = DATA_DIR / "nyc_inspections_raw.csv"
@@ -28,4 +27,3 @@ SOCRATA_APP_TOKEN = os.getenv("SOCRATA_APP_TOKEN") or os.getenv("NYFS_SOCRATA_AP
 
 def ensure_data_dir() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    STREAMLIT_DIR.mkdir(parents=True, exist_ok=True)
