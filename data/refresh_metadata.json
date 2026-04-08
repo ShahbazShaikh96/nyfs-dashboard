@@ -1,13 +1,12 @@
 {
-  "refreshed_at_utc": "2026-04-07T10:54:01.599206+00:00",
-  "source": "existing_cache_fallback",
-  "fallback_used": true,
-  "raw_rows": 295481,
-  "clean_rows": 295481,
-  "inspection_rows": 87814,
-  "latest_restaurants": 30832,
+  "refreshed_at_utc": "2026-04-08T11:00:08.820075+00:00",
+  "source": "socrata_api",
+  "fallback_used": false,
+  "raw_rows": 296213,
+  "clean_rows": 296213,
+  "inspection_rows": 88076,
+  "latest_restaurants": 30962,
   "halal_supported": false,
   "halal_note": "The source inspection dataset does not include a reliable halal field, so NYFS does not currently offer halal filtering.",
-  "last_record_date": "2026-03-27T06:00:16",
-  "refresh_error": "name 'Path' is not defined"
+  "last_record_date": "2026-04-07T06:00:20"
 }
