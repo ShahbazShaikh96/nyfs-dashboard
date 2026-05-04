@@ -15,6 +15,8 @@ type QueryFilters = {
   risk: string[];
   criticalOnly: "all" | "critical" | "non_critical";
   search: string;
+  startDate: string;
+  endDate: string;
   limit: number;
   offset?: number;
 };
@@ -28,6 +30,8 @@ function createQueryString(filters: QueryFilters): string {
   if (filters.criticalOnly === "critical") params.set("critical_only", "true");
   if (filters.criticalOnly === "non_critical") params.set("critical_only", "false");
   if (filters.search.trim()) params.set("search", filters.search.trim());
+  if (filters.startDate) params.set("start_date", filters.startDate);
+  if (filters.endDate) params.set("end_date", filters.endDate);
   params.set("limit", String(filters.limit));
   if (filters.offset) params.set("offset", String(filters.offset));
   return params.toString();

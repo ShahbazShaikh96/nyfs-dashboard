@@ -8,6 +8,8 @@ export type AppliedFilters = {
   risk: string[];
   criticalOnly: "all" | "critical" | "non_critical";
   search: string;
+  startDate: string;
+  endDate: string;
   limit: number;
 };
 
@@ -24,6 +26,8 @@ const emptyFilters: AppliedFilters = {
   risk: [],
   criticalOnly: "all",
   search: "",
+  startDate: "",
+  endDate: "",
   limit: 5000
 };
 
@@ -157,6 +161,54 @@ export function FilterPanel({ options, applied, onApply }: Props) {
           }
           placeholder="Type a restaurant name"
         />
+      </label>
+
+      <div className="field-grid">
+        <label className="field">
+          Start Date
+          <input
+            type="date"
+            value={staged.startDate}
+            onChange={(event) =>
+              setStaged((prev) => ({
+                ...prev,
+                startDate: event.target.value
+              }))
+            }
+          />
+        </label>
+
+        <label className="field">
+          End Date
+          <input
+            type="date"
+            value={staged.endDate}
+            onChange={(event) =>
+              setStaged((prev) => ({
+                ...prev,
+                endDate: event.target.value
+              }))
+            }
+          />
+        </label>
+      </div>
+
+      <label className="field">
+        Result Limit
+        <select
+          value={String(staged.limit)}
+          onChange={(event) =>
+            setStaged((prev) => ({
+              ...prev,
+              limit: Number(event.target.value)
+            }))
+          }
+        >
+          <option value="800">800 (fast mobile)</option>
+          <option value="1200">1200</option>
+          <option value="2500">2500</option>
+          <option value="5000">5000 (full desktop default)</option>
+        </select>
       </label>
 
       <div className="actions">

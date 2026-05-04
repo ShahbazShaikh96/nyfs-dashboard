@@ -19,6 +19,8 @@ const defaultFilters: AppliedFilters = {
   risk: [],
   criticalOnly: "all",
   search: "",
+  startDate: "",
+  endDate: "",
   limit: 5000
 };
 
