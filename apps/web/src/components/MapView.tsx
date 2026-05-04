@@ -120,6 +120,14 @@ export function MapView({ restaurants, selectedRestaurantId, onSelectRestaurant,
               />
               <div className="tooltip-title">{activePopupRestaurant.restaurant_name}</div>
               <div className="tooltip-row">
+                Safety Signal:{" "}
+                <span
+                  className={`safety-pill ${activePopupRestaurant.risk_level.toLowerCase()}`}
+                >
+                  {activePopupRestaurant.risk_level}
+                </span>
+              </div>
+              <div className="tooltip-row">
                 Rating: Grade {activePopupRestaurant.inspection_grade || "Pending"}
               </div>
               <div className="tooltip-row">Cuisine: {activePopupRestaurant.cuisine_type}</div>

@@ -24,6 +24,10 @@ export function IntelligencePanel({ summary }: Props) {
     () => maxValue((summary?.grade_distribution ?? []).map((item) => item.count)),
     [summary]
   );
+  const riskMax = useMemo(
+    () => maxValue((summary?.risk_distribution ?? []).map((item) => item.count)),
+    [summary]
+  );
 
   if (!summary) {
     return <section className="intel-panel">Loading intelligence feed...</section>;
@@ -67,6 +71,28 @@ export function IntelligencePanel({ summary }: Props) {
       </div>
 
       <div className="intel-block">
+        <h3>Risk Level Mix</h3>
+        {(summary.risk_distribution || []).map((item) => (
+          <div className="intel-row" key={item.risk_level}>
+            <span>{item.risk_level}</span>
+            <div className="bar">
+              <div
+                className={`bar-fill ${
+                  item.risk_level === "Low"
+                    ? "green"
+                    : item.risk_level === "Medium"
+                      ? "amber"
+                      : "red"
+                }`}
+                style={{ width: `${Math.max((item.count / riskMax) * 100, 8)}%` }}
+              />
+            </div>
+            <strong>{item.count}</strong>
+          </div>
+        ))}
+      </div>
+
+      <div className="intel-block">
         <h3>Top Critical-Violation Cuisines</h3>
         {(summary.top_cuisines_critical || []).slice(0, 6).map((item) => (
           <div className="intel-row" key={item.cuisine_type}>
@@ -92,6 +118,31 @@ export function IntelligencePanel({ summary }: Props) {
               <span>{item.month}</span>
               <strong>{item.avg_score.toFixed(1)}</strong>
               <small>{item.inspections} inspections</small>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="intel-block">
+        <h3>Monthly Inspection Volume</h3>
+        <div className="trend-list">
+          {(summary.monthly_trend || []).slice(-6).map((item) => (
+            <div className="intel-row" key={`vol-${item.month}`}>
+              <span>{item.month}</span>
+              <div className="bar">
+                <div
+                  className="bar-fill blue"
+                  style={{
+                    width: `${Math.max(
+                      (item.inspections /
+                        Math.max(...(summary.monthly_trend || []).map((m) => m.inspections), 1)) *
+                        100,
+                      8
+                    )}%`
+                  }}
+                />
+              </div>
+              <strong>{item.inspections}</strong>
             </div>
           ))}
         </div>

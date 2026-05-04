@@ -73,6 +73,11 @@ class GradeDistributionPoint(BaseModel):
     count: int
 
 
+class RiskDistributionPoint(BaseModel):
+    risk_level: str
+    count: int
+
+
 class CuisineCriticalPoint(BaseModel):
     cuisine_type: str
     critical_violations: int
@@ -87,5 +92,6 @@ class MonthlyTrendPoint(BaseModel):
 class SummaryResponse(BaseModel):
     borough_scores: list[BoroughScorePoint]
     grade_distribution: list[GradeDistributionPoint]
+    risk_distribution: list[RiskDistributionPoint]
     top_cuisines_critical: list[CuisineCriticalPoint]
     monthly_trend: list[MonthlyTrendPoint]

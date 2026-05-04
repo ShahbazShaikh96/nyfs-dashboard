@@ -219,6 +219,13 @@ def build_summary(filtered_latest_df: pd.DataFrame, history_df: pd.DataFrame) ->
         .sort_values("count", ascending=False)
     )
 
+    risk_distribution = (
+        filtered_latest_df.groupby("risk_level", as_index=False)["restaurant_id"]
+        .count()
+        .rename(columns={"risk_level": "risk_level", "restaurant_id": "count"})
+        .sort_values("count", ascending=False)
+    )
+
     top_cuisines_critical = (
         filtered_latest_df.groupby("cuisine_type", as_index=False)["critical_violations"]
         .sum()
@@ -243,6 +250,7 @@ def build_summary(filtered_latest_df: pd.DataFrame, history_df: pd.DataFrame) ->
     return {
         "borough_scores": borough_scores.to_dict(orient="records"),
         "grade_distribution": grade_distribution.to_dict(orient="records"),
+        "risk_distribution": risk_distribution.to_dict(orient="records"),
         "top_cuisines_critical": top_cuisines_critical.to_dict(orient="records"),
         "monthly_trend": monthly_trend.to_dict(orient="records"),
     }

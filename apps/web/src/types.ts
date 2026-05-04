@@ -35,6 +35,7 @@ export type RestaurantsResponse = {
 export type SummaryResponse = {
   borough_scores: { borough: string; avg_score: number }[];
   grade_distribution: { grade: string; count: number }[];
+  risk_distribution: { risk_level: string; count: number }[];
   top_cuisines_critical: { cuisine_type: string; critical_violations: number }[];
   monthly_trend: { month: string; avg_score: number; inspections: number }[];
 };
