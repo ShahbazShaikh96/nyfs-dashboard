@@ -1,12 +1,13 @@
 {
-  "refreshed_at_utc": "2026-05-14T11:57:02.863658+00:00",
-  "source": "socrata_api",
-  "fallback_used": false,
+  "refreshed_at_utc": "2026-05-15T11:54:20.982053+00:00",
+  "source": "existing_cache_fallback",
+  "fallback_used": true,
   "raw_rows": 295424,
   "clean_rows": 295424,
   "inspection_rows": 87794,
   "latest_restaurants": 30933,
   "halal_supported": false,
   "halal_note": "The source inspection dataset does not include a reliable halal field, so NYFS does not currently offer halal filtering.",
-  "last_record_date": "2026-05-13T06:00:40"
+  "last_record_date": "2026-05-13T06:00:40",
+  "refresh_error": "503 Server Error: Service Unavailable for url: https://data.cityofnewyork.us/resource/43nn-pn8j.json?%24limit=20000&%24offset=20000"
 }
