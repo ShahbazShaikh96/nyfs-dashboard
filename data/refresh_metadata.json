@@ -1,13 +1,12 @@
 {
-  "refreshed_at_utc": "2026-06-22T15:22:24.502103+00:00",
-  "source": "existing_cache_fallback",
-  "fallback_used": true,
-  "raw_rows": 296271,
-  "clean_rows": 296271,
-  "inspection_rows": 87223,
-  "latest_restaurants": 31070,
+  "refreshed_at_utc": "2026-06-23T12:35:40.760884+00:00",
+  "source": "socrata_api",
+  "fallback_used": false,
+  "raw_rows": 295302,
+  "clean_rows": 295302,
+  "inspection_rows": 83391,
+  "latest_restaurants": 29930,
   "halal_supported": false,
   "halal_note": "The source inspection dataset does not include a reliable halal field, so NYFS does not currently offer halal filtering.",
-  "last_record_date": "2026-06-19T06:00:19",
-  "refresh_error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+  "last_record_date": "2026-06-22T06:00:30"
 }
