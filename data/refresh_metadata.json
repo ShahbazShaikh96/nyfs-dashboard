@@ -1,12 +1,12 @@
 {
-  "refreshed_at_utc": "2026-07-21T11:49:38.976291+00:00",
+  "refreshed_at_utc": "2026-07-22T11:51:23.766901+00:00",
   "source": "socrata_api",
   "fallback_used": false,
-  "raw_rows": 296588,
-  "clean_rows": 296588,
-  "inspection_rows": 86527,
-  "latest_restaurants": 30963,
+  "raw_rows": 294822,
+  "clean_rows": 294822,
+  "inspection_rows": 85909,
+  "latest_restaurants": 30765,
   "halal_supported": false,
   "halal_note": "The source inspection dataset does not include a reliable halal field, so NYFS does not currently offer halal filtering.",
-  "last_record_date": "2026-07-20T06:00:21"
+  "last_record_date": "2026-07-21T06:00:21"
 }
