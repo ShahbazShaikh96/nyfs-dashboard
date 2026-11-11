@@ -1,13 +1,12 @@
 {
-  "refreshed_at_utc": "2026-11-10T17:28:13.596937+00:00",
-  "source": "existing_cache_fallback",
-  "fallback_used": true,
-  "raw_rows": 295002,
-  "clean_rows": 295002,
-  "inspection_rows": 87461,
-  "latest_restaurants": 31124,
+  "refreshed_at_utc": "2026-11-11T17:45:15.846222+00:00",
+  "source": "socrata_api",
+  "fallback_used": false,
+  "raw_rows": 294700,
+  "clean_rows": 294700,
+  "inspection_rows": 87888,
+  "latest_restaurants": 31470,
   "halal_supported": false,
   "halal_note": "The source inspection dataset does not include a reliable halal field, so NYFS does not currently offer halal filtering.",
-  "last_record_date": "2026-11-06T06:00:20",
-  "refresh_error": "('Connection broken: IncompleteRead(4699 bytes read, 1445 more expected)', IncompleteRead(4699 bytes read, 1445 more expected))"
+  "last_record_date": "2026-11-10T06:00:17"
 }
